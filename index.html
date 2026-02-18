@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ImageMagick Effects - Iteration Development Process</title>
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTUiIGZpbGw9IiMyNTYzZWIiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJtMTYgNyAyIDcgNyAyLTcgMi0yIDctMi03LTctMiA3LTJaIi8+PC9zdmc+">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    .iteration-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .iteration-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .iteration-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+    }
+
+    .command-box {
+      border-radius: 8px;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85em;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    [data-bs-theme="dark"] .command-box {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #e0e0e0;
+    }
+
+    [data-bs-theme="light"] .command-box {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      color: #212529;
+    }
+
+    .effect-section {
+      scroll-margin-top: 80px;
+    }
+
+    .progress-timeline {
+      position: relative;
+      padding-left: 30px;
+    }
+
+    .progress-timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, #0d6efd, #198754);
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -25px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #0d6efd;
+      border: 2px solid #000;
+    }
+
+    .timeline-item.final::before {
+      background: #198754;
+      width: 16px;
+      height: 16px;
+      left: -27px;
+    }
+
+    .smooth-rounded {
+      border-radius: 12px;
+    }
+
+    .stats-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      color: white;
+    }
+
+    [data-bs-theme="light"] .stats-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    [data-bs-theme="dark"] .stats-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .nav-pills .nav-link {
+      border-radius: 8px;
+      margin-right: 5px;
+    }
+
+    .nav-pills .nav-link.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .iteration-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .copy-btn-command {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .copy-btn-command:hover {
+      opacity: 1;
+    }
+
+    /* Light mode adjustments */
+    [data-bs-theme="light"] .card {
+      border: 1px solid #dee2e6;
+    }
+
+    [data-bs-theme="light"] .timeline-item::before {
+      border: 2px solid #fff;
+    }
+
+    [data-bs-theme="light"] .progress-timeline::before {
+      background: linear-gradient(to bottom, #0d6efd, #198754);
+    }
+
+    .comparison-slider {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .comparison-slider img {
+      width: 100%;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .comparison-slider img:hover {
+      border-color: #0d6efd;
+    }
+
+    /* Counter animation */
+    .counter-animate {
+      transition: all 0.3s ease;
+    }
+
+    .stats-card {
+      transition: transform 0.3s ease;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-5px);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg bg-body-tertiary sticky-top" data-bs-theme="dark">
+    <div class="container-fluid">
+      <span class="navbar-brand">
+        <i class="bi bi-image me-2"></i>ImageMagick Effects
+      </span>
+      <span class="navbar-text">
+        <i class="bi bi-diagram-3 me-2"></i>Iteration Development Process
+      </span>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#overview">Overview</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              Jump to Effect
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#cross_hatching">Cross-Hatching</a></li>
+              <li><a class="dropdown-item" href="#bas_relief">Bas-Relief</a></li>
+              <li><a class="dropdown-item" href="#halftone">Halftone</a></li>
+              <li><a class="dropdown-item" href="#fresco">Fresco</a></li>
+              <li><a class="dropdown-item" href="#paper_cut">Paper Cut</a></li>
+              <li><a class="dropdown-item" href="#glitch_art">Glitch Art</a></li>
+              <li><a class="dropdown-item" href="#linocut">Linocut</a></li>
+              <li><a class="dropdown-item" href="#batik">Batik</a></li>
+              <li><a class="dropdown-item" href="#scraperboard">Scraperboard</a></li>
+              <li><a class="dropdown-item" href="#solarization">Solarization</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <button class="btn btn-outline-light dropdown-toggle ms-2 dark-theme-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-circle-half"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><button class="dropdown-item" data-bs-theme-value="light" aria-pressed="false">
+                <i class="me-2 bi bi-sun-fill"></i>Light</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="dark" aria-pressed="true">
+                <i class="me-2 bi bi-moon-stars-fill"></i>Dark</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="auto" aria-pressed="false">
+                <i class="me-2 bi bi-circle-half"></i>Auto</button></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container-fluid py-4">
+    <!-- Overview Section -->
+    <section id="overview" class="mb-5">
+      <h1 class="display-4 text-center mb-4">
+        <i class="bi bi-diagram-3-fill me-3"></i>Iteration Development Process
+      </h1>
+      <p class="lead text-center mb-5">
+        A comprehensive documentation of 10 artistic effects, each refined through 10 iterations using pure ImageMagick
+        CLI operations.
+      </p>
+
+      <!-- Stats Cards -->
+      <div class="row g-4 mb-5">
+        <div class="col-md-3">
+          <div class="card stats-card text-center p-4">
+            <h2 class="display-4 fw-bold mb-2 counter-animate" data-target="10">0</h2>
+            <p class="mb-0">Unique Effects</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card stats-card text-center p-4">
+            <h2 class="display-4 fw-bold mb-2 counter-animate" data-target="100">0</h2>
+            <p class="mb-0">Total Iterations</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card stats-card text-center p-4">
+            <h2 class="display-4 fw-bold mb-2 counter-animate" data-target="10">0</h2>
+            <p class="mb-0">Per Effect</p>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card stats-card text-center p-4">
+            <h2 class="display-4 fw-bold mb-2 counter-animate" data-target="1">0</h2>
+            <p class="mb-0">Test Image</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Summary -->
+      <div class="card shadow-sm mb-5">
+        <div class="card-body">
+          <h3 class="card-title mb-3"><i class="bi bi-info-circle me-2"></i>About This Project</h3>
+          <p class="card-text">
+            This page documents the complete iterative development process for 10 new ImageMagick artistic effects.
+            Each effect progressed through 10 iterations, starting from simple baseline techniques and evolving into
+            sophisticated, gallery-worthy filters through systematic refinement.
+          </p>
+          <p class="card-text mb-0">
+            <strong>Development Approach:</strong> Each iteration built upon the previous one by adjusting parameters,
+            adding texture layers, incorporating advanced morphology operations, and fine-tuning tonal responses.
+            The process demonstrates how complex artistic effects can be achieved using only command-line ImageMagick
+            operations.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Effects Grid -->
+    <section id="effects-grid" class="mb-5">
+      <h2 class="display-6 mb-4 text-center">All Effects at a Glance</h2>
+      <div class="row g-4" id="effects-overview">
+        <!-- Effects will be dynamically populated -->
+      </div>
+    </section>
+
+    <!-- Detailed Effect Sections -->
+    <div id="detailed-sections">
+      <!-- Sections will be dynamically populated -->
+    </div>
+
+  </main>
+
+  <!-- Image Modal -->
+  <div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content bg-black">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-white" id="imageModalLabel">Image</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body d-flex align-items-center justify-content-center p-0">
+          <img id="imageModalImg" class="img-fluid" style="object-fit: contain; max-height: 100vh" alt="">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast for Copy Notification -->
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="top: 70px !important;">
+    <div id="copyToast" class="toast align-items-center text-bg-success border-0">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi bi-check-circle me-2"></i>Command copied to clipboard!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@gramex/ui@0.3/dist/dark-theme.js" type="module"></script>
+  <script type="module" src="./iterations-viewer.js"></script>
+
+</body>
+
+</html>
